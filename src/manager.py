@@ -9,9 +9,9 @@ class Manager:
         self.tenants = {}
         self.transfers = []
         self.bills = []
-       
-        self.load_data()
-
+        self.blacklist= []
+        self.load_data() 
+        
     def load_data(self):
         self.apartments = Apartment.from_json_file(self.parameters.apartments_json_path)
         self.tenants = Tenant.from_json_file(self.parameters.tenants_json_path)
@@ -35,7 +35,12 @@ class Manager:
         total_cost = 0.0
         for bill in self.bills:
             if bill.apartment == apartment_key and (year is None or bill.settlement_year == year) and (month is None or bill.settlement_month == month):
-                total_cost += bill.amount_pln
+                tenant = self.tenants.get(bill.tenant_name)
+                bill_amount = bill.amount_pln
+                if tenant and getattr(tenant, 'referred_by', None):
+                    bill_amount -= 100.0
+                    
+                total_cost += bill_amount
         return total_cost
 
     def get_settlement(self, apartment_key: str, year: int, month: int) -> ApartmentSettlement | None:
@@ -47,12 +52,19 @@ class Manager:
         if total_cost is None:
             return None
         
+        discount = 0.0
+        for bill in self.bills:
+            if bill.apartment == apartment_key and bill.settlement_year == year and bill.settlement_month == month:
+                tenant = self.tenants.get(bill.tenant_name)
+                if tenant and getattr(tenant, 'referred_by', None):
+                    discount = 100.0
+
         return ApartmentSettlement(
             key=f"{apartment_key}-{year}-{month}",
             apartment=apartment_key,
             year=year,
             month=month,
-            total_due_pln=total_cost
+            total_due_pln=total_cost - discount
         )
     
     def create_tenants_settlements(self, apartment_settlement: ApartmentSettlement) -> List[TenantSettlement] | None:
@@ -112,3 +124,23 @@ class Manager:
         if apartment_key not in self.apartments:
             raise ValueError("Apartment key does not exist")
         return any([bill for bill in self.bills if bill.apartment == apartment_key and bill.settlement_year == year and bill.settlement_month == month])
+    
+    def check_transfers_for_errors(self) -> list[str]:
+        errors = []
+        for item in self.bills:
+            if item.tenant_name not in self.tenants:
+                errors.append(f"Błąd: Brak przypisania - najemca '{item.tenant_name}' nie istnieje.")
+                continue 
+            tenant = self.tenants[item.tenant_name]
+            start_year = int(tenant.contract_start[:4])
+            end_year = int(tenant.contract_end[:4])
+            if item.settlement_year < start_year or item.settlement_year > end_year:
+                errors.append(f"Błąd: Rok rozliczeniowy {item.settlement_year} jest poza umową najemcy.")
+                
+        return errors
+    
+    def is_blacklisted(self, name: str) -> bool:
+        for bad_tenant in self.blacklist:
+            if bad_tenant.name == name:
+                return True
+        return False

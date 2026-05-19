@@ -87,15 +87,22 @@ def test_apartment_has_any_bills():
     assert has_bills == False
 
 def test_validate_transfers():
-    manager = Manager(Parameters(
-        min_transfer_amount=10,max_transfer_amount=5000
-    ))
+    class DummyParams:
+        min_transfer_amount = 10
+        max_transfer_amount = 5000
+
+    manager = Manager(DummyParams())
+    
+    class DummyTransfer:
+        def __init__(self, id, amount):
+            self.id = id
+            self.amount_pln = amount
+
     manager.transfers = [
-        Transfer(id="t1", amount=5.0),
-        Transfer(id="t2", amount=500.0),
-        Transfer(id="t3", amount=6000.0)
+        DummyTransfer(id="t1", amount=5.0),
+        DummyTransfer(id="t2", amount=500.0),
+        DummyTransfer(id="t3", amount=6000.0)
     ]
     
     errors = manager.validate_transfers()
-    
     assert len(errors) == 2

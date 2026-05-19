@@ -90,7 +90,7 @@ def test_validation_missing_tenant_and_date_outside_contract():
     from src.manager import Manager
     from src.models import Tenant, Bill
 
-    m = Manager()
+    m = Manager(None)
     m.tenants["Adam"] = Tenant(name="Adam", contract_start="2026-01-01", contract_end="2026-12-31")
 
     m.bills.append(Bill(apartment_key="A1", tenant_name="Brak", amount_pln=100, settlement_year=2026, settlement_month=1))

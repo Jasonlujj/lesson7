@@ -1,4 +1,4 @@
-from src.models import Bill, Parameters, TenantSettlement, ApartmentSettlement, Transfer
+from src.models import Bill, Parameters, TenantSettlement, ApartmentSettlement, Transfer, Czarna_lista
 from src.manager import Manager
 
 
@@ -85,3 +85,14 @@ def test_apartment_has_any_bills():
 
     has_bills = manager.has_any_bills('apart-polanka', 2025, 3)
     assert has_bills == False
+    
+def test_czarna_lista() -> str:
+    bad_tenant = Czarna_lista(name="Jan Nowak", reason="Brak wpłat")
+    assert bad_tenant.reason == "Brak wpłat"
+
+    manager = Manager(Parameters())
+    manager.blacklist = [bad_tenant]
+    assert manager.is_blacklisted("Jan Nowak") is True
+    assert manager.is_blacklisted("Anna Nowak") is False
+    
+    

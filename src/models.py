@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, List
+from dataclasses import dataclass
 
 import json
 
@@ -102,3 +103,8 @@ class TenantSettlement(BaseModel):
     total_due_pln: float
     total_transfers_pln: float = 0.0
     balance_pln: float = 0.0
+    
+@dataclass
+class Czarna_lista:
+    name: str
+    reason: str

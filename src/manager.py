@@ -9,9 +9,9 @@ class Manager:
         self.tenants = {}
         self.transfers = []
         self.bills = []
-       
-        self.load_data()
-
+        self.blacklist= []
+        self.load_data() 
+        
     def load_data(self):
         self.apartments = Apartment.from_json_file(self.parameters.apartments_json_path)
         self.tenants = Tenant.from_json_file(self.parameters.tenants_json_path)
@@ -24,8 +24,8 @@ class Manager:
                 return False
         return True
     
-    def get_apartment(self, key: str):
-        return self.apartments.get(key)
+    def get_apartment(self, apartment_key: str) -> Apartment | None:
+        return self.apartments.get(apartment_key)
 
     def get_apartment_costs(self, apartment_key: str, year: int = None, month: int = None) -> float | None:
         if month is not None and (month < 1 or month > 12):
@@ -112,3 +112,9 @@ class Manager:
         if apartment_key not in self.apartments:
             raise ValueError("Apartment key does not exist")
         return any([bill for bill in self.bills if bill.apartment == apartment_key and bill.settlement_year == year and bill.settlement_month == month])
+    
+    def is_blacklisted(self, name: str) -> bool:
+        for bad_tenant in self.blacklist:
+            if bad_tenant.name == name:
+                return True
+        return False

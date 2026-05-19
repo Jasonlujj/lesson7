@@ -9,9 +9,9 @@ class Manager:
         self.tenants = {}
         self.transfers = []
         self.bills = []
-       
-        self.load_data()
-
+        self.blacklist= []
+        self.load_data() 
+        
     def load_data(self):
         self.apartments = Apartment.from_json_file(self.parameters.apartments_json_path)
         self.tenants = Tenant.from_json_file(self.parameters.tenants_json_path)
@@ -126,3 +126,9 @@ class Manager:
                 errors.append(f"Błąd: Rok rozliczeniowy {item.settlement_year} jest poza umową najemcy.")
                 
         return errors
+    
+    def is_blacklisted(self, name: str) -> bool:
+        for bad_tenant in self.blacklist:
+            if bad_tenant.name == name:
+                return True
+        return False

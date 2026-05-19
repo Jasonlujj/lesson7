@@ -35,7 +35,12 @@ class Manager:
         total_cost = 0.0
         for bill in self.bills:
             if bill.apartment == apartment_key and (year is None or bill.settlement_year == year) and (month is None or bill.settlement_month == month):
-                total_cost += bill.amount_pln
+                tenant = self.tenants.get(bill.tenant_name)
+                bill_amount = bill.amount_pln
+                if tenant and getattr(tenant, 'referred_by', None):
+                    bill_amount -= 100.0
+                    
+                total_cost += bill_amount
         return total_cost
 
     def get_settlement(self, apartment_key: str, year: int, month: int) -> ApartmentSettlement | None:
@@ -47,12 +52,19 @@ class Manager:
         if total_cost is None:
             return None
         
+        discount = 0.0
+        for bill in self.bills:
+            if bill.apartment == apartment_key and bill.settlement_year == year and bill.settlement_month == month:
+                tenant = self.tenants.get(bill.tenant_name)
+                if tenant and getattr(tenant, 'referred_by', None):
+                    discount = 100.0
+
         return ApartmentSettlement(
             key=f"{apartment_key}-{year}-{month}",
             apartment=apartment_key,
             year=year,
             month=month,
-            total_due_pln=total_cost
+            total_due_pln=total_cost - discount
         )
     
     def create_tenants_settlements(self, apartment_settlement: ApartmentSettlement) -> List[TenantSettlement] | None:

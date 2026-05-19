@@ -85,14 +85,17 @@ def test_apartment_has_any_bills():
 
     has_bills = manager.has_any_bills('apart-polanka', 2025, 3)
     assert has_bills == False
-    
-def test_czarna_lista() -> str:
-    bad_tenant = Czarna_lista(name="Jan Nowak", reason="Brak wpłat")
-    assert bad_tenant.reason == "Brak wpłat"
 
-    manager = Manager(Parameters())
-    manager.blacklist = [bad_tenant]
-    assert manager.is_blacklisted("Jan Nowak") is True
-    assert manager.is_blacklisted("Anna Nowak") is False
+def test_validate_transfers():
+    manager = Manager(Parameters(
+        min_transfer_amount=10,max_transfer_amount=5000
+    ))
+    manager.transfers = [
+        Transfer(id="t1", amount=5.0),
+        Transfer(id="t2", amount=500.0),
+        Transfer(id="t3", amount=6000.0)
+    ]
     
+    errors = manager.validate_transfers()
     
+    assert len(errors) == 2

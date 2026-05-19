@@ -112,3 +112,17 @@ class Manager:
         if apartment_key not in self.apartments:
             raise ValueError("Apartment key does not exist")
         return any([bill for bill in self.bills if bill.apartment == apartment_key and bill.settlement_year == year and bill.settlement_month == month])
+    
+    def check_transfers_for_errors(self) -> list[str]:
+        errors = []
+        for item in self.bills:
+            if item.tenant_name not in self.tenants:
+                errors.append(f"Błąd: Brak przypisania - najemca '{item.tenant_name}' nie istnieje.")
+                continue 
+            tenant = self.tenants[item.tenant_name]
+            start_year = int(tenant.contract_start[:4])
+            end_year = int(tenant.contract_end[:4])
+            if item.settlement_year < start_year or item.settlement_year > end_year:
+                errors.append(f"Błąd: Rok rozliczeniowy {item.settlement_year} jest poza umową najemcy.")
+                
+        return errors

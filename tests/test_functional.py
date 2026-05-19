@@ -86,16 +86,15 @@ def test_apartment_has_any_bills():
     has_bills = manager.has_any_bills('apart-polanka', 2025, 3)
     assert has_bills == False
 
-def test_validate_transfers():
-    manager = Manager(Parameters(
-        min_transfer_amount=10,max_transfer_amount=5000
-    ))
-    manager.transfers = [
-        Transfer(id="t1", amount=5.0),
-        Transfer(id="t2", amount=500.0),
-        Transfer(id="t3", amount=6000.0)
-    ]
-    
-    errors = manager.validate_transfers()
-    
-    assert len(errors) == 2
+def test_validation_missing_tenant_and_date_outside_contract():
+    from src.manager import Manager
+    from src.models import Tenant, Bill
+
+    m = Manager()
+    m.tenants["Adam"] = Tenant(name="Adam", contract_start="2026-01-01", contract_end="2026-12-31")
+
+    m.bills.append(Bill(apartment_key="A1", tenant_name="Brak", amount_pln=100, settlement_year=2026, settlement_month=1))
+    m.bills.append(Bill(apartment_key="A1", tenant_name="Adam", amount_pln=100, settlement_year=2030, settlement_month=1))
+
+    res = m.check_transfers_for_errors()
+    assert len(res) == 2
